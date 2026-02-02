@@ -19,11 +19,13 @@ def main():
     print("RANDOM FOREST TRAINING PIPELINE")
     print("=" * 70)
 
+    EVALUATE_KNOWN_ONLY = True
+
     data_path = kagglehub.dataset_download("hassan06/nslkdd")
     train_path = os.path.join(data_path, "KDDTrain+.txt")
     test_path = os.path.join(data_path, "KDDTest+.txt")
 
-    model_dir = 'models'
+    model_dir = 'random_forest_classifier_model'
     os.makedirs(model_dir, exist_ok=True)
 
     columns = [
@@ -78,7 +80,8 @@ def main():
         min_samples_leaf=6,
         max_features='sqrt',
         class_weight='balanced',
-        random_state=42,
+        bootstrap=True,
+        random_state=355677,
         n_jobs=-1
     )
 
@@ -88,21 +91,77 @@ def main():
     y_pred_encoded = rf_model.predict(X_test_encoded)
     y_pred = label_encoder.inverse_transform(y_pred_encoded)
 
-    accuracy = accuracy_score(y_test, y_pred)
-    macro_f1 = f1_score(y_test, y_pred, average='macro', zero_division=0)
-    weighted_f1 = f1_score(y_test, y_pred, average='weighted', zero_division=0)
+    print("\n" + "=" * 70)
+    print("EVALUATION ON ALL TEST SAMPLES")
+    print("=" * 70)
+    print("Description: Performance metrics computed on entire test set,")
+    print("including novel attack types that were not present in training.")
+    print("Model is penalized for failing to detect unknown attacks.")
+    print("=" * 70)
 
-    print(f"\n   Test Accuracy: {accuracy:.4f}")
-    print(f"   Test Macro F1: {macro_f1:.4f}")
-    print(f"   Test Weighted F1: {weighted_f1:.4f}")
+    accuracy_all = accuracy_score(y_test, y_pred)
+    macro_f1_all = f1_score(y_test, y_pred, average='macro', zero_division=0)
+    weighted_f1_all = f1_score(y_test, y_pred, average='weighted', zero_division=0)
 
-    print("\n6. Generating Classification Report...")
-    report = classification_report(y_test, y_pred, zero_division=0)
-    print("\n" + report)
+    print(f"\nTest Accuracy: {accuracy_all:.4f}")
+    print(f"Test Macro F1: {macro_f1_all:.4f}")
+    print(f"Test Weighted F1: {weighted_f1_all:.4f}")
+
+    print("\n6. Generating Classification Report (All Samples)...")
+    report_all = classification_report(y_test, y_pred, zero_division=0)
+    print("\n" + report_all)
+
+    report_all_dict = classification_report(y_test, y_pred, zero_division=0, output_dict=True)
+
+    if EVALUATE_KNOWN_ONLY:
+        print("\n" + "=" * 70)
+        print("EVALUATION ON KNOWN ATTACKS ONLY")
+        print("=" * 70)
+        print("Description: Performance metrics computed only on attack types")
+        print("that were present in the training data. Novel/unknown attacks")
+        print("are excluded from evaluation to assess model performance on")
+        print("attacks it was actually trained to detect.")
+        print("=" * 70)
+
+        mask_known = y_test_encoded != -1
+        num_known = np.sum(mask_known)
+        num_unknown = len(y_test) - num_known
+
+        print(f"\nKnown attack samples: {num_known}")
+        print(f"Unknown attack samples: {num_unknown}")
+
+        if num_known > 0:
+            y_test_known = y_test[mask_known]
+            y_pred_known = y_pred[mask_known]
+
+            accuracy_known = accuracy_score(y_test_known, y_pred_known)
+            macro_f1_known = f1_score(y_test_known, y_pred_known, average='macro', zero_division=0)
+            weighted_f1_known = f1_score(y_test_known, y_pred_known, average='weighted', zero_division=0)
+
+            print(f"\nTest Accuracy (known only): {accuracy_known:.4f}")
+            print(f"Test Macro F1 (known only): {macro_f1_known:.4f}")
+            print(f"Test Weighted F1 (known only): {weighted_f1_known:.4f}")
+
+            print("\n7. Generating Classification Report (Known Attacks Only)...")
+            report_known = classification_report(y_test_known, y_pred_known, zero_division=0)
+            print("\n" + report_known)
+
+            report_known_dict = classification_report(y_test_known, y_pred_known, zero_division=0, output_dict=True)
+        else:
+            print("\nNo known attacks in test set!")
+            report_known_dict = None
+            accuracy_known = None
+            macro_f1_known = None
+            weighted_f1_known = None
+    else:
+        report_known_dict = None
+        accuracy_known = None
+        macro_f1_known = None
+        weighted_f1_known = None
 
     cm = confusion_matrix(y_test, y_pred)
 
-    print("\n7. Saving Model and Encoders...")
+    print("\n8. Saving Model and Encoders...")
 
     model_path = os.path.join(model_dir, 'rf_model.pkl')
     joblib.dump(rf_model.get_model(), model_path)
@@ -117,6 +176,7 @@ def main():
     print(f"   Label encoder saved: {label_encoder_path}")
 
     metadata = {
+        'training_date': datetime.now().isoformat(),
         'model_type': 'RandomForestClassifier',
         'hyperparameters': {
             'n_estimators': 213,
@@ -128,10 +188,17 @@ def main():
             'class_weight': 'balanced',
             'random_state': 355677
         },
-        'performance': {
-            'test_accuracy': float(accuracy),
-            'test_macro_f1': float(macro_f1),
-            'test_weighted_f1': float(weighted_f1)
+        'performance_all_samples': {
+            'description': 'Metrics on entire test set including novel attacks',
+            'test_accuracy': float(accuracy_all),
+            'test_macro_f1': float(macro_f1_all),
+            'test_weighted_f1': float(weighted_f1_all)
+        },
+        'performance_known_only': {
+            'description': 'Metrics excluding novel attacks not in training data',
+            'test_accuracy': float(accuracy_known) if accuracy_known is not None else None,
+            'test_macro_f1': float(macro_f1_known) if macro_f1_known is not None else None,
+            'test_weighted_f1': float(weighted_f1_known) if weighted_f1_known is not None else None
         },
         'dataset': {
             'num_train_samples': len(X_train),
@@ -141,7 +208,8 @@ def main():
         },
         'classes': label_encoder.get_classes().tolist(),
         'categorical_features': categorical_cols,
-        'feature_names': feature_encoder.get_encoded_feature_names()
+        'feature_names': feature_encoder.get_encoded_feature_names(),
+        'evaluate_known_only_flag': EVALUATE_KNOWN_ONLY
     }
 
     metadata_path = os.path.join(model_dir, 'model_metadata.json')
@@ -149,11 +217,16 @@ def main():
         json.dump(metadata, f, indent=2)
     print(f"   Metadata saved: {metadata_path}")
 
-    report_dict = classification_report(y_test, y_pred, zero_division=0, output_dict=True)
-    report_path = os.path.join(model_dir, 'classification_report.json')
-    with open(report_path, 'w') as f:
-        json.dump(report_dict, f, indent=2)
-    print(f"   Classification report saved: {report_path}")
+    report_all_path = os.path.join(model_dir, 'classification_report_all.json')
+    with open(report_all_path, 'w') as f:
+        json.dump(report_all_dict, f, indent=2)
+    print(f"   Classification report (all samples) saved: {report_all_path}")
+
+    if report_known_dict is not None:
+        report_known_path = os.path.join(model_dir, 'classification_report_known.json')
+        with open(report_known_path, 'w') as f:
+            json.dump(report_known_dict, f, indent=2)
+        print(f"   Classification report (known only) saved: {report_known_path}")
 
     cm_path = os.path.join(model_dir, 'confusion_matrix.png')
     class_labels = sorted(set(y_test) | set(y_pred))

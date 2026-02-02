@@ -155,8 +155,16 @@ def main():
         json.dump(report_dict, f, indent=2)
     print(f"   Classification report saved: {report_path}")
 
-    cm_path = os.path.join(model_dir, 'confusion_matrix.npy')
-    np.save(cm_path, cm)
+    cm_path = os.path.join(model_dir, 'confusion_matrix.png')
+    class_labels = sorted(set(y_test) | set(y_pred))
+    plt.figure(figsize=(20, 16))
+    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues',xticklabels=class_labels, yticklabels=class_labels)
+    plt.xlabel('Predicted')
+    plt.ylabel('Actual')
+    plt.title('Confusion Matrix')
+    plt.tight_layout()
+    plt.savefig(cm_path, dpi=150)
+    plt.close()
     print(f"   Confusion matrix saved: {cm_path}")
 
     print("\n" + "=" * 70)

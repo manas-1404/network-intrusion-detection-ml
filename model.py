@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 from sklearn.metrics import classification_report, confusion_matrix, f1_score
 from sklearn.ensemble import RandomForestClassifier
+from xgboost import XGBClassifier
 
 
 class BaseModel(ABC):
@@ -301,3 +302,189 @@ class RandomForestModel(BaseModel):
             return f"RandomForestModel(fitted=True, n_estimators={self.n_estimators})"
         else:
             return f"RandomForestModel(fitted=False, n_estimators={self.n_estimators})"
+
+
+class XGBoostModel(BaseModel):
+    """
+    XGBoost classifier wrapper.
+    Requires numeric labels - use LabelEncoderWrapper for y.
+    """
+
+    def __init__(
+            self,
+            n_estimators: int = 100,
+            learning_rate: float = 0.1,
+            max_depth: int = 6,
+            min_child_weight: int = 1,
+            subsample: float = 1.0,
+            colsample_bytree: float = 1.0,
+            gamma: float = 0.0,
+            reg_alpha: float = 0.0,
+            reg_lambda: float = 1.0,
+            random_state: Optional[int] = 42,
+            n_jobs: int = -1,
+            verbosity: int = 1
+    ):
+        """
+        Initialize XGBoost model.
+
+        Args:
+            n_estimators: Number of boosting rounds
+            learning_rate: Step size shrinkage
+            max_depth: Maximum tree depth
+            min_child_weight: Minimum sum of instance weight
+            subsample: Subsample ratio of training instances
+            colsample_bytree: Subsample ratio of columns
+            gamma: Minimum loss reduction for split
+            reg_alpha: L1 regularization
+            reg_lambda: L2 regularization
+            random_state: Random seed
+            n_jobs: Number of parallel jobs
+            verbosity: Verbosity level
+        """
+        super().__init__()
+
+        self.n_estimators = n_estimators
+        self.learning_rate = learning_rate
+        self.max_depth = max_depth
+        self.min_child_weight = min_child_weight
+        self.subsample = subsample
+        self.colsample_bytree = colsample_bytree
+        self.gamma = gamma
+        self.reg_alpha = reg_alpha
+        self.reg_lambda = reg_lambda
+        self.random_state = random_state
+        self.n_jobs = n_jobs
+        self.verbosity = verbosity
+
+        self.sample_weights: Optional[np.ndarray] = None
+
+        self.model = XGBClassifier(
+            n_estimators=self.n_estimators,
+            learning_rate=self.learning_rate,
+            max_depth=self.max_depth,
+            min_child_weight=self.min_child_weight,
+            subsample=self.subsample,
+            colsample_bytree=self.colsample_bytree,
+            gamma=self.gamma,
+            reg_alpha=self.reg_alpha,
+            reg_lambda=self.reg_lambda,
+            random_state=self.random_state,
+            n_jobs=self.n_jobs,
+            verbosity=self.verbosity,
+            eval_metric='mlogloss'
+        )
+
+    def fit(
+            self,
+            X_train: pd.DataFrame,
+            y_train: pd.Series,
+            sample_weight: Optional[np.ndarray] = None
+    ) -> 'XGBoostModel':
+        """
+        Train XGBoost model.
+
+        Args:
+            X_train: Training features
+            y_train: Training labels (MUST be numeric, use LabelEncoderWrapper)
+            sample_weight: Sample weights for imbalanced classes
+        """
+        print(f"Training XGBoost with {self.n_estimators} estimators...")
+
+        if sample_weight is not None:
+            self.sample_weights = sample_weight
+            self.model.fit(X_train, y_train, sample_weight=sample_weight)
+        else:
+            self.model.fit(X_train, y_train)
+
+        self._is_fitted = True
+        print("Training complete!")
+
+        return self
+
+    def predict(self, X: pd.DataFrame) -> np.ndarray:
+        """
+        Make predictions.
+
+        Args:
+            X: Feature dataframe
+        """
+        if not self._is_fitted:
+            raise ValueError("Model not fitted. Call fit() first.")
+
+        return self.model.predict(X)
+
+    def get_feature_importance(self) -> pd.Series:
+        """
+        Get feature importance scores.
+        """
+        if not self._is_fitted:
+            raise ValueError("Model not fitted. Call fit() first.")
+
+        importances = self.model.feature_importances_
+
+        if hasattr(self.model, 'feature_names_in_'):
+            feature_names = self.model.feature_names_in_
+        else:
+            feature_names = [f"feature_{i}" for i in range(len(importances))]
+
+        return pd.Series(importances, index=feature_names).sort_values(ascending=False)
+
+    def get_params(self) -> Dict[str, Any]:
+        """
+        Get model hyperparameters.
+        """
+        return {
+            'n_estimators': self.n_estimators,
+            'learning_rate': self.learning_rate,
+            'max_depth': self.max_depth,
+            'min_child_weight': self.min_child_weight,
+            'subsample': self.subsample,
+            'colsample_bytree': self.colsample_bytree,
+            'gamma': self.gamma,
+            'reg_alpha': self.reg_alpha,
+            'reg_lambda': self.reg_lambda,
+            'random_state': self.random_state,
+            'n_jobs': self.n_jobs,
+            'verbosity': self.verbosity
+        }
+
+    def set_params(self, **params) -> 'XGBoostModel':
+        """
+        Set model hyperparameters.
+
+        Args:
+            **params: Hyperparameters to set
+        """
+        for key, value in params.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
+            else:
+                raise ValueError(f"Invalid parameter: {key}")
+
+        self.model = XGBClassifier(
+            n_estimators=self.n_estimators,
+            learning_rate=self.learning_rate,
+            max_depth=self.max_depth,
+            min_child_weight=self.min_child_weight,
+            subsample=self.subsample,
+            colsample_bytree=self.colsample_bytree,
+            gamma=self.gamma,
+            reg_alpha=self.reg_alpha,
+            reg_lambda=self.reg_lambda,
+            random_state=self.random_state,
+            n_jobs=self.n_jobs,
+            verbosity=self.verbosity,
+            eval_metric='mlogloss'
+        )
+
+        self._is_fitted = False
+
+        return self
+
+    def __repr__(self) -> str:
+        """String representation."""
+        if self._is_fitted:
+            return f"XGBoostModel(fitted=True, n_estimators={self.n_estimators})"
+        else:
+            return f"XGBoostModel(fitted=False, n_estimators={self.n_estimators})"

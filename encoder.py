@@ -48,7 +48,7 @@ class OneHotEncoderWrapper(Encoder):
     One-hot encoder for categorical features.
     """
 
-    def __init__(self, categories: Any, drop: Any = None, sparse_output: bool = False, handle_unknown: str = 'ignore'):
+    def __init__(self, categories: Any = "auto", drop: Any = None, sparse_output: bool = False, handle_unknown: str = 'ignore'):
         """
         Initialize one-hot encoder.
 

@@ -312,6 +312,7 @@ class RandomForestModel(BaseModel):
             y_train: pd.Series,
             X_val: pd.DataFrame,
             y_val: pd.Series,
+            param_distributions: Dict[str, Any],
             n_trials: int = 50,
             metric: str = 'macro_f1'
     ) -> Dict[str, Any]:
@@ -323,23 +324,33 @@ class RandomForestModel(BaseModel):
             y_train: Training labels
             X_val: Validation features
             y_val: Validation labels
+            param_distributions: Dictionary where:
+                - tuple (low, high): suggest_int or suggest_float based on type
+                - list [choices]: suggest_categorical
+                - single value: fixed parameter
             n_trials: Number of optimization trials
             metric: Metric to optimize ('macro_f1', 'weighted_f1', 'accuracy')
         """
 
         def objective(trial):
-            params = {
-                'n_estimators': trial.suggest_int('n_estimators', 50, 500),
-                "criterion": trial.suggest_categorical("criterion", ["gini", "entropy"]),
-                'max_depth': trial.suggest_int('max_depth', 10, 50),
-                'min_samples_split': trial.suggest_int('min_samples_split', 2, 20),
-                'min_samples_leaf': trial.suggest_int('min_samples_leaf', 1, 10),
-                'max_features': trial.suggest_categorical('max_features', ['sqrt', 'log2']),
-                "bootstrap": self.bootstrap,
-                'class_weight': self.class_weight,
-                'random_state': self.random_state,
-                'n_jobs': self.n_jobs
-            }
+            params = {}
+
+            for param_name, param_value in param_distributions.items():
+                if isinstance(param_value, tuple):
+                    # Tuple means range (low, high)
+                    low, high = param_value
+                    if isinstance(low, int) and isinstance(high, int):
+                        params[param_name] = trial.suggest_int(param_name, low, high)
+                    else:
+                        params[param_name] = trial.suggest_float(param_name, low, high)
+
+                elif isinstance(param_value, list):
+                    # List means categorical choices
+                    params[param_name] = trial.suggest_categorical(param_name, param_value)
+
+                else:
+                    # Single value means fixed parameter
+                    params[param_name] = param_value
 
             model = RandomForestClassifier(**params)
             model.fit(X_train, y_train)
@@ -378,6 +389,7 @@ class RandomForestModel(BaseModel):
             'best_score': study.best_value,
             'study': study
         }
+
 
 class XGBoostModel(BaseModel):
     """

@@ -244,6 +244,7 @@ class LabelEncoderWrapper():
         self._classes: Optional[np.ndarray] = None
         self._label_to_number: Optional[dict] = None
         self._number_to_label: Optional[dict] = None
+        self._unknown_label = -1
 
     def fit(self, X: pd.Series) -> 'LabelEncoderWrapper':
         """
@@ -268,6 +269,7 @@ class LabelEncoderWrapper():
     def transform(self, X: pd.Series) -> np.ndarray:
         """
         Transform string labels to numeric.
+        Handles unknown labels by assigning them to -1.
 
         Args:
             X: Label series (y, not features)
@@ -275,11 +277,27 @@ class LabelEncoderWrapper():
         if not self._is_fitted:
             raise ValueError("LabelEncoder not fitted. Call fit() first.")
 
-        return self.encoder.transform(X)
+        result = np.empty(len(X), dtype=int)
+
+        unknown_count = 0
+
+        for i, label in enumerate(X):
+            if label in self._label_to_number:
+                result[i] = self._label_to_number[label]
+            else:
+                result[i] = self._unknown_label
+                unknown_count += 1
+
+        if unknown_count > 0:
+            unknown_labels = X[result == self._unknown_label].unique()
+            print(f"Warning: Found {unknown_count} samples with {len(unknown_labels)} unknown labels: {list(unknown_labels)}")
+
+        return result
 
     def inverse_transform(self, y_encoded: np.ndarray) -> np.ndarray:
         """
         Transform numeric labels back to strings.
+        Unknown labels (-1) are converted to 'unknown'.
 
         Args:
             y_encoded: Numeric label array
@@ -287,7 +305,17 @@ class LabelEncoderWrapper():
         if not self._is_fitted:
             raise ValueError("LabelEncoder not fitted. Call fit() first.")
 
-        return self.encoder.inverse_transform(y_encoded)
+        result = np.empty(len(y_encoded), dtype=object)
+
+        for i, num in enumerate(y_encoded):
+            if num == self._unknown_label:
+                result[i] = 'unknown'
+            elif num in self._number_to_label:
+                result[i] = self._number_to_label[num]
+            else:
+                result[i] = 'unknown'
+
+        return result
 
     def label_to_number(self, label: str) -> int:
         """
@@ -300,7 +328,7 @@ class LabelEncoderWrapper():
             raise ValueError("LabelEncoder not fitted. Call fit() first.")
 
         if label not in self._label_to_number:
-            raise ValueError(f"Unknown label: {label}")
+            return self._unknown_label
 
         return self._label_to_number[label]
 
@@ -314,8 +342,8 @@ class LabelEncoderWrapper():
         if not self._is_fitted:
             raise ValueError("LabelEncoder not fitted. Call fit() first.")
 
-        if number not in self._number_to_label:
-            raise ValueError(f"Unknown number: {number}")
+        if number == self._unknown_label or number not in self._number_to_label:
+            return 'unknown'
 
         return self._number_to_label[number]
 
@@ -329,7 +357,7 @@ class LabelEncoderWrapper():
         if not self._is_fitted:
             raise ValueError("LabelEncoder not fitted. Call fit() first.")
 
-        return [self._label_to_number[label] for label in labels]
+        return [self._label_to_number.get(label, self._unknown_label) for label in labels]
 
     def numbers_to_labels(self, numbers: List[int]) -> List[str]:
         """
@@ -341,7 +369,13 @@ class LabelEncoderWrapper():
         if not self._is_fitted:
             raise ValueError("LabelEncoder not fitted. Call fit() first.")
 
-        return [self._number_to_label[num] for num in numbers]
+        result = []
+        for num in numbers:
+            if num == self._unknown_label:
+                result.append('unknown')
+            else:
+                result.append(self._number_to_label.get(num, 'unknown'))
+        return result
 
     def get_classes(self) -> np.ndarray:
         """

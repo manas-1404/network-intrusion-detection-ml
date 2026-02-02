@@ -2,10 +2,10 @@ from abc import ABC, abstractmethod
 from typing import Optional, Dict, Any
 import pandas as pd
 import numpy as np
-from sklearn.metrics import classification_report, confusion_matrix, f1_score
+from sklearn.metrics import classification_report, confusion_matrix, f1_score, accuracy_score
 from sklearn.ensemble import RandomForestClassifier
 from xgboost import XGBClassifier
-
+import optuna
 
 class BaseModel(ABC):
     """
@@ -272,8 +272,11 @@ class RandomForestModel(BaseModel):
         Args:
             **params: Hyperparameters to set
         """
+
+        valid_params = self.model.get_params()
+
         for key, value in params.items():
-            if hasattr(self, key):
+            if key in valid_params:
                 setattr(self, key, value)
             else:
                 raise ValueError(f"Invalid parameter: {key}")
@@ -303,6 +306,78 @@ class RandomForestModel(BaseModel):
         else:
             return f"RandomForestModel(fitted=False, n_estimators={self.n_estimators})"
 
+    def tune_hyperparameters(
+            self,
+            X_train: pd.DataFrame,
+            y_train: pd.Series,
+            X_val: pd.DataFrame,
+            y_val: pd.Series,
+            n_trials: int = 50,
+            metric: str = 'macro_f1'
+    ) -> Dict[str, Any]:
+        """
+        Tune hyperparameters using Optuna.
+
+        Args:
+            X_train: Training features
+            y_train: Training labels
+            X_val: Validation features
+            y_val: Validation labels
+            n_trials: Number of optimization trials
+            metric: Metric to optimize ('macro_f1', 'weighted_f1', 'accuracy')
+        """
+
+        def objective(trial):
+            params = {
+                'n_estimators': trial.suggest_int('n_estimators', 50, 500),
+                "criterion": trial.suggest_categorical("criterion", ["gini", "entropy"]),
+                'max_depth': trial.suggest_int('max_depth', 10, 50),
+                'min_samples_split': trial.suggest_int('min_samples_split', 2, 20),
+                'min_samples_leaf': trial.suggest_int('min_samples_leaf', 1, 10),
+                'max_features': trial.suggest_categorical('max_features', ['sqrt', 'log2']),
+                "bootstrap": self.bootstrap,
+                'class_weight': self.class_weight,
+                'random_state': self.random_state,
+                'n_jobs': self.n_jobs
+            }
+
+            model = RandomForestClassifier(**params)
+            model.fit(X_train, y_train)
+            y_pred = model.predict(X_val)
+
+            if metric == 'macro_f1':
+                score = f1_score(y_val, y_pred, average='macro', zero_division=0)
+            elif metric == 'weighted_f1':
+                score = f1_score(y_val, y_pred, average='weighted', zero_division=0)
+            elif metric == 'accuracy':
+                score = accuracy_score(y_val, y_pred)
+            else:
+                raise ValueError(f"Unknown metric: {metric}")
+
+            return score
+
+        print(f"Starting hyperparameter tuning with {n_trials} trials...")
+        print(f"Optimizing for: {metric}")
+
+        study = optuna.create_study(
+            direction='maximize',
+            sampler=optuna.samplers.TPESampler(seed=self.random_state)
+        )
+
+        study.optimize(objective, n_trials=n_trials, show_progress_bar=True)
+
+        print(f"\nBest {metric}: {study.best_value:.4f}")
+        print("Best hyperparameters:")
+        for key, value in study.best_params.items():
+            print(f"  {key}: {value}")
+
+        self.set_params(**study.best_params)
+
+        return {
+            'best_params': study.best_params,
+            'best_score': study.best_value,
+            'study': study
+        }
 
 class XGBoostModel(BaseModel):
     """

@@ -1,0 +1,249 @@
+{
+  "apache2": {
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1-score": 0.0,
+    "support": 737.0
+  },
+  "back": {
+    "precision": 0.44266337854500615,
+    "recall": 1.0,
+    "f1-score": 0.6136752136752137,
+    "support": 359.0
+  },
+  "buffer_overflow": {
+    "precision": 0.5,
+    "recall": 0.15,
+    "f1-score": 0.23076923076923078,
+    "support": 20.0
+  },
+  "ftp_write": {
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1-score": 0.0,
+    "support": 3.0
+  },
+  "guess_passwd": {
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1-score": 0.0,
+    "support": 1231.0
+  },
+  "httptunnel": {
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1-score": 0.0,
+    "support": 133.0
+  },
+  "imap": {
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1-score": 0.0,
+    "support": 1.0
+  },
+  "ipsweep": {
+    "precision": 0.5767634854771784,
+    "recall": 0.9858156028368794,
+    "f1-score": 0.7277486910994765,
+    "support": 141.0
+  },
+  "land": {
+    "precision": 1.0,
+    "recall": 0.42857142857142855,
+    "f1-score": 0.6,
+    "support": 7.0
+  },
+  "loadmodule": {
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1-score": 0.0,
+    "support": 2.0
+  },
+  "mailbomb": {
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1-score": 0.0,
+    "support": 293.0
+  },
+  "mscan": {
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1-score": 0.0,
+    "support": 996.0
+  },
+  "multihop": {
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1-score": 0.0,
+    "support": 18.0
+  },
+  "named": {
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1-score": 0.0,
+    "support": 17.0
+  },
+  "neptune": {
+    "precision": 0.965675057208238,
+    "recall": 0.9967790423019111,
+    "f1-score": 0.9809805579036348,
+    "support": 4657.0
+  },
+  "nmap": {
+    "precision": 0.9863013698630136,
+    "recall": 0.9863013698630136,
+    "f1-score": 0.9863013698630136,
+    "support": 73.0
+  },
+  "normal": {
+    "precision": 0.6638124649073555,
+    "recall": 0.9739470703326125,
+    "f1-score": 0.7895154221795567,
+    "support": 9711.0
+  },
+  "perl": {
+    "precision": 0.5,
+    "recall": 0.5,
+    "f1-score": 0.5,
+    "support": 2.0
+  },
+  "phf": {
+    "precision": 1.0,
+    "recall": 0.5,
+    "f1-score": 0.6666666666666666,
+    "support": 2.0
+  },
+  "pod": {
+    "precision": 0.6981132075471698,
+    "recall": 0.9024390243902439,
+    "f1-score": 0.7872340425531915,
+    "support": 41.0
+  },
+  "portsweep": {
+    "precision": 0.7736842105263158,
+    "recall": 0.9363057324840764,
+    "f1-score": 0.8472622478386167,
+    "support": 157.0
+  },
+  "processtable": {
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1-score": 0.0,
+    "support": 685.0
+  },
+  "ps": {
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1-score": 0.0,
+    "support": 15.0
+  },
+  "rootkit": {
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1-score": 0.0,
+    "support": 13.0
+  },
+  "saint": {
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1-score": 0.0,
+    "support": 319.0
+  },
+  "satan": {
+    "precision": 0.5933710590137429,
+    "recall": 0.998639455782313,
+    "f1-score": 0.744421906693712,
+    "support": 735.0
+  },
+  "sendmail": {
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1-score": 0.0,
+    "support": 14.0
+  },
+  "smurf": {
+    "precision": 0.979381443298969,
+    "recall": 1.0,
+    "f1-score": 0.9895833333333334,
+    "support": 665.0
+  },
+  "snmpgetattack": {
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1-score": 0.0,
+    "support": 178.0
+  },
+  "snmpguess": {
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1-score": 0.0,
+    "support": 331.0
+  },
+  "sqlattack": {
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1-score": 0.0,
+    "support": 2.0
+  },
+  "teardrop": {
+    "precision": 0.24489795918367346,
+    "recall": 1.0,
+    "f1-score": 0.39344262295081966,
+    "support": 12.0
+  },
+  "udpstorm": {
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1-score": 0.0,
+    "support": 2.0
+  },
+  "warezclient": {
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1-score": 0.0,
+    "support": 0.0
+  },
+  "warezmaster": {
+    "precision": 0.5,
+    "recall": 0.001059322033898305,
+    "f1-score": 0.0021141649048625794,
+    "support": 944.0
+  },
+  "worm": {
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1-score": 0.0,
+    "support": 2.0
+  },
+  "xlock": {
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1-score": 0.0,
+    "support": 9.0
+  },
+  "xsnoop": {
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1-score": 0.0,
+    "support": 4.0
+  },
+  "xterm": {
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1-score": 0.0,
+    "support": 13.0
+  },
+  "accuracy": 0.7218772178850248,
+  "macro avg": {
+    "precision": 0.26729906757873495,
+    "recall": 0.29127841150247125,
+    "f1-score": 0.2528132171905469,
+    "support": 22544.0
+  },
+  "weighted avg": {
+    "precision": 0.5761230313487055,
+    "recall": 0.7218772178850248,
+    "f1-score": 0.6218381067216792,
+    "support": 22544.0
+  }
+}

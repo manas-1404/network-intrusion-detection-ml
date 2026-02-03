@@ -1,0 +1,147 @@
+{
+  "back": {
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1-score": 1.0,
+    "support": 359.0
+  },
+  "buffer_overflow": {
+    "precision": 0.6,
+    "recall": 0.15,
+    "f1-score": 0.24,
+    "support": 20.0
+  },
+  "ftp_write": {
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1-score": 0.0,
+    "support": 3.0
+  },
+  "guess_passwd": {
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1-score": 0.0,
+    "support": 1231.0
+  },
+  "imap": {
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1-score": 0.0,
+    "support": 1.0
+  },
+  "ipsweep": {
+    "precision": 0.9788732394366197,
+    "recall": 0.9858156028368794,
+    "f1-score": 0.9823321554770318,
+    "support": 141.0
+  },
+  "land": {
+    "precision": 1.0,
+    "recall": 0.42857142857142855,
+    "f1-score": 0.6,
+    "support": 7.0
+  },
+  "loadmodule": {
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1-score": 0.0,
+    "support": 2.0
+  },
+  "multihop": {
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1-score": 0.0,
+    "support": 18.0
+  },
+  "neptune": {
+    "precision": 1.0,
+    "recall": 0.9967790423019111,
+    "f1-score": 0.9983869233250887,
+    "support": 4657.0
+  },
+  "nmap": {
+    "precision": 0.9863013698630136,
+    "recall": 0.9863013698630136,
+    "f1-score": 0.9863013698630136,
+    "support": 73.0
+  },
+  "normal": {
+    "precision": 0.8183076656861049,
+    "recall": 0.9739470703326125,
+    "f1-score": 0.8893695049132541,
+    "support": 9711.0
+  },
+  "perl": {
+    "precision": 0.5,
+    "recall": 0.5,
+    "f1-score": 0.5,
+    "support": 2.0
+  },
+  "phf": {
+    "precision": 1.0,
+    "recall": 0.5,
+    "f1-score": 0.6666666666666666,
+    "support": 2.0
+  },
+  "pod": {
+    "precision": 0.6981132075471698,
+    "recall": 0.9024390243902439,
+    "f1-score": 0.7872340425531915,
+    "support": 41.0
+  },
+  "portsweep": {
+    "precision": 0.7819148936170213,
+    "recall": 0.9363057324840764,
+    "f1-score": 0.8521739130434782,
+    "support": 157.0
+  },
+  "rootkit": {
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1-score": 0.0,
+    "support": 13.0
+  },
+  "satan": {
+    "precision": 0.8155555555555556,
+    "recall": 0.998639455782313,
+    "f1-score": 0.8978593272171254,
+    "support": 735.0
+  },
+  "smurf": {
+    "precision": 0.979381443298969,
+    "recall": 1.0,
+    "f1-score": 0.9895833333333334,
+    "support": 665.0
+  },
+  "teardrop": {
+    "precision": 0.24489795918367346,
+    "recall": 1.0,
+    "f1-score": 0.39344262295081966,
+    "support": 12.0
+  },
+  "warezclient": {
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1-score": 0.0,
+    "support": 0.0
+  },
+  "warezmaster": {
+    "precision": 1.0,
+    "recall": 0.001059322033898305,
+    "f1-score": 0.0021164021164021165,
+    "support": 944.0
+  },
+  "accuracy": 0.8659146536128551,
+  "macro avg": {
+    "precision": 0.5637884242812784,
+    "recall": 0.516357184027108,
+    "f1-score": 0.49024846642997294,
+    "support": 18794.0
+  },
+  "weighted avg": {
+    "precision": 0.8270538957477378,
+    "recall": 0.8659146536128551,
+    "f1-score": 0.8171641986128656,
+    "support": 18794.0
+  }
+}

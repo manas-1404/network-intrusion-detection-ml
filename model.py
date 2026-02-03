@@ -575,3 +575,91 @@ class XGBoostModel(BaseModel):
             return f"XGBoostModel(fitted=True, n_estimators={self.n_estimators})"
         else:
             return f"XGBoostModel(fitted=False, n_estimators={self.n_estimators})"
+
+    def tune_hyperparameters(
+            self,
+            X_train: pd.DataFrame,
+            y_train: pd.Series,
+            X_val: pd.DataFrame,
+            y_val: pd.Series,
+            param_distributions: Dict[str, Any],
+            n_trials: int = 50,
+            metric: str = 'macro_f1',
+            sample_weight: Optional[np.ndarray] = None
+    ) -> Dict[str, Any]:
+        """
+        Tune hyperparameters using Optuna.
+
+        Args:
+            X_train: Training features
+            y_train: Training labels (MUST be numeric)
+            X_val: Validation features
+            y_val: Validation labels (MUST be numeric)
+            param_distributions: Dictionary where
+                tuple (low, high) suggests int or float based on type
+                list [choices] suggests categorical
+                single value means fixed parameter
+            n_trials: Number of optimization trials
+            metric: Metric to optimize ('macro_f1', 'weighted_f1', 'accuracy')
+            sample_weight: Sample weights for training
+        """
+
+        def objective(trial):
+            params = {}
+
+            for param_name, param_value in param_distributions.items():
+                if isinstance(param_value, tuple):
+                    low, high = param_value
+                    if isinstance(low, int) and isinstance(high, int):
+                        params[param_name] = trial.suggest_int(param_name, low, high)
+                    else:
+                        params[param_name] = trial.suggest_float(param_name, low, high)
+
+                elif isinstance(param_value, list):
+                    params[param_name] = trial.suggest_categorical(param_name, param_value)
+
+                else:
+                    params[param_name] = param_value
+
+            model = XGBClassifier(**params, eval_metric='mlogloss')
+
+            if sample_weight is not None:
+                model.fit(X_train, y_train, sample_weight=sample_weight)
+            else:
+                model.fit(X_train, y_train)
+
+            y_pred = model.predict(X_val)
+
+            if metric == 'macro_f1':
+                score = f1_score(y_val, y_pred, average='macro', zero_division=0)
+            elif metric == 'weighted_f1':
+                score = f1_score(y_val, y_pred, average='weighted', zero_division=0)
+            elif metric == 'accuracy':
+                score = accuracy_score(y_val, y_pred)
+            else:
+                raise ValueError(f"Unknown metric: {metric}")
+
+            return score
+
+        print(f"Starting hyperparameter tuning with {n_trials} trials...")
+        print(f"Optimizing for: {metric}")
+
+        study = optuna.create_study(
+            direction='maximize',
+            sampler=optuna.samplers.TPESampler(seed=self.random_state)
+        )
+
+        study.optimize(objective, n_trials=n_trials, show_progress_bar=True)
+
+        print(f"\nBest {metric}: {study.best_value:.4f}")
+        print("Best hyperparameters:")
+        for key, value in study.best_params.items():
+            print(f"  {key}: {value}")
+
+        self.set_params(**study.best_params)
+
+        return {
+            'best_params': study.best_params,
+            'best_score': study.best_value,
+            'study': study
+        }

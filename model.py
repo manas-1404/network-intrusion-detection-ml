@@ -410,7 +410,8 @@ class XGBoostModel(BaseModel):
             reg_lambda: float = 1.0,
             random_state: Optional[int] = 42,
             n_jobs: int = -1,
-            verbosity: int = 1
+            verbosity: int = 1,
+            use_gpu: bool = False
     ):
         """
         Initialize XGBoost model.
@@ -428,6 +429,7 @@ class XGBoostModel(BaseModel):
             random_state: Random seed
             n_jobs: Number of parallel jobs
             verbosity: Verbosity level
+            use_gpu: Whether to use GPU acceleration (requires CUDA)
         """
         super().__init__()
 
@@ -443,6 +445,7 @@ class XGBoostModel(BaseModel):
         self.random_state = random_state
         self.n_jobs = n_jobs
         self.verbosity = verbosity
+        self.use_gpu = use_gpu
 
         self.sample_weights: Optional[np.ndarray] = None
 
@@ -459,7 +462,9 @@ class XGBoostModel(BaseModel):
             random_state=self.random_state,
             n_jobs=self.n_jobs,
             verbosity=self.verbosity,
-            eval_metric='mlogloss'
+            eval_metric='mlogloss',
+            device='cuda' if self.use_gpu else None,
+            tree_method='hist' if self.use_gpu else None
         )
 
     def fit(
@@ -476,7 +481,8 @@ class XGBoostModel(BaseModel):
             y_train: Training labels (MUST be numeric, use LabelEncoderWrapper)
             sample_weight: Sample weights for imbalanced classes
         """
-        print(f"Training XGBoost with {self.n_estimators} estimators...")
+        device = "GPU (CUDA)" if self.use_gpu else "CPU"
+        print(f"Training XGBoost with {self.n_estimators} estimators on {device}...")
 
         if sample_weight is not None:
             self.sample_weights = sample_weight
@@ -533,7 +539,8 @@ class XGBoostModel(BaseModel):
             'reg_lambda': self.reg_lambda,
             'random_state': self.random_state,
             'n_jobs': self.n_jobs,
-            'verbosity': self.verbosity
+            'verbosity': self.verbosity,
+            'use_gpu': self.use_gpu
         }
 
     def set_params(self, **params) -> 'XGBoostModel':
@@ -543,8 +550,10 @@ class XGBoostModel(BaseModel):
         Args:
             **params: Hyperparameters to set
         """
+        valid_params = set(self.get_params().keys())
+
         for key, value in params.items():
-            if hasattr(self, key):
+            if key in valid_params:
                 setattr(self, key, value)
             else:
                 raise ValueError(f"Invalid parameter: {key}")
@@ -562,7 +571,9 @@ class XGBoostModel(BaseModel):
             random_state=self.random_state,
             n_jobs=self.n_jobs,
             verbosity=self.verbosity,
-            eval_metric='mlogloss'
+            eval_metric='mlogloss',
+            device='cuda' if self.use_gpu else None,
+            tree_method='hist' if self.use_gpu else None
         )
 
         self._is_fitted = False
@@ -571,10 +582,11 @@ class XGBoostModel(BaseModel):
 
     def __repr__(self) -> str:
         """String representation."""
+        device = "gpu" if self.use_gpu else "cpu"
         if self._is_fitted:
-            return f"XGBoostModel(fitted=True, n_estimators={self.n_estimators})"
+            return f"XGBoostModel(fitted=True, n_estimators={self.n_estimators}, device={device})"
         else:
-            return f"XGBoostModel(fitted=False, n_estimators={self.n_estimators})"
+            return f"XGBoostModel(fitted=False, n_estimators={self.n_estimators}, device={device})"
 
     def tune_hyperparameters(
             self,
